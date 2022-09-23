@@ -11,7 +11,14 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from decouple import config
+import os
 
+DATABASE_NAME = config('DATABASE_NAME')
+DATABASE_PASSWORD = config('DATABASE_PASSWORD')
+DATABASE_HOST = config('DATABASE_HOST')
+DATABASE_PORT = config('DATABASE_PORT')
+DEBUG = config('DEBUG')
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,13 +44,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'oauth2_provider',
+
+    # 'oauth2_provider',
     'rest_framework',
     'drf_yasg',
-    
+    'corsheaders',
+    'djoser',
     'Authentication',
 ]
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -52,6 +60,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Auth.urls'
@@ -79,32 +89,61 @@ WSGI_APPLICATION = 'Auth.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+        'default': {
+            # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': DATABASE_NAME,                      # Or path to database file if using sqlite3.
+            'USER': 'postgres',                      # Not used with sqlite3.
+            'PASSWORD': DATABASE_PASSWORD,                  # Not used with sqlite3.
+            'HOST': DATABASE_HOST,
+            'PORT': DATABASE_PORT,
+
+        },
 }
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-      'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-    ),
+    
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )}
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+    ),}
 
-from os import environ
-OAUTH2_PROVIDER = {
-    "OIDC_ENABLED": True,
-    "OIDC_RSA_PRIVATE_KEY": environ.get("OIDC_RSA_PRIVATE_KEY"),
-    'RESOURCE_SERVER_INTROSPECTION_URL': 'http://127.0.0.1:8000/o/introspect/',
-    'RESOURCE_SERVER_AUTH_TOKEN': 'auth_server_admin_token',
-    'SCOPES': {
-        'read': 'Read scope',
-        'write': 'Write scope',
-        'introspection': 'Introspect token scope',
-    },
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'USERNAME_CHANGED_EMAIL_CONFIRMATION': True,
+    'PASSWORD_CHANGED_EMAIL_CONFIRMATION': True,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'SET_USERNAME_RETYPE': True,
+    'SET_PASSWORD_RETYPE': True,
+   
+    'SEND_ACTIVATION_EMAIL': True,
+    # 'SOCIAL_AUTH_TOKEN_STRATEGY': 'djoser.social.token.jwt.TokenStrategy',
+    # 'SOCIAL_AUTH_ALLOWED_REDIRECT_URIS': ['http://localhost:8000/google', 'http://localhost:8000/facebook'],
+    'SERIALIZERS': {
+        'user_create': 'Authentication.serializers.UserCreateSerializer',
+        'user': 'Authentication.serializers.UserCreateSerializer',
+        'current_user': 'Authentication.serializers.UserCreateSerializer',
+        'user_delete': 'djoser.serializers.UserDeleteSerializer',
+    }
 }
+
+
+# from os import environ
+# OAUTH2_PROVIDER = {
+#     "OIDC_ENABLED": True,
+#     "OIDC_RSA_PRIVATE_KEY": environ.get("OIDC_RSA_PRIVATE_KEY"),
+#     'RESOURCE_SERVER_INTROSPECTION_URL': 'http://127.0.0.1:8000/o/introspect/',
+#     'RESOURCE_SERVER_AUTH_TOKEN': 'auth_server_admin_token',
+#     'SCOPES': {
+#         'read': 'Read scope',
+#         'write': 'Write scope',
+#         'introspection': 'Introspect token scope',
+#     },
+# }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -124,6 +163,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+SWAGGER_SETTINGS = {
+    "exclude_namespaces": [], 
+    "api_version": '0.1', 
+    "api_path": "/",  
+    "enabled_methods": [  # Specify which methods to enable in Swagger UI
+        'get',
+        'post',
+        'put',
+        'patch',
+        'delete'
+    ],
+    "api_key": '', # An API key
+    "is_authenticated": False,  # Set to True to enforce user authentication,
+    "is_superuser": False,  # Set to True to enforce admin only access
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
@@ -143,3 +197,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+ORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True

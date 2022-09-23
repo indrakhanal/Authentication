@@ -1,22 +1,14 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
-from django.contrib.auth.models import User
-from .serializers import UserSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from django.http import JsonResponse
 from rest_framework import status
-
-class UserViewSet(ModelViewSet):
-    """ API for User Create, Update, List  and Delete """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+from rest_framework.authtoken.models import Token
 
 
 
 class MyInfo(APIView):
     """
-    API to return a static data of mine personal information
+    API to return a static data of My personal information
     """
     permission_classes = [IsAuthenticated]
     
@@ -29,7 +21,7 @@ class MyInfo(APIView):
         data["experience"] = "2 year +"
         data["home_town"] = "Arjunchaupari-5, Syangja, Nepal"
         data["current_address"] = "Kathmandu"
-        data["study"] = "BScCSIT"
+        data["degree"] = "BScCSIT"
         data["current_position"] = "Python Developer"
         return JsonResponse({"status":status.HTTP_200_OK, "data":data})
     
